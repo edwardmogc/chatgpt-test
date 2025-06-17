@@ -1,0 +1,246 @@
+syntax = "proto3";
+
+package Match;
+option go_package = "proto/Match";
+import "GSMgr/GSMgr.proto";
+import "Common/Common.proto";
+
+enum Status {
+    NONE     = 0; // not matching
+    Match    = 1; // 匹配中
+    WAIT     = 2; // 每轮等待
+    PLAYING  = 3; // match complet, playing
+    CANCEL   = 4; // 桌子人不足解散
+    OVER     = 5; // 桌子正常结束
+}
+enum Type {
+    EMPTY    = 0; // table通知，根据table的状态操作
+    PLYUP    = 1; // 玩家加入或离开
+    START    = 2; // 开始游戏
+    CONSULT  = 4; // 发起解散通知
+    GIVEUP   = 5; // 取消匹配通知
+    END      = 6; // 结束
+}
+enum Rule {
+    NRULE    = 0;
+    AA       = 1;  //默认房主扣卡;否则AA
+    AUTO     = 2;  //人满自动开桌
+    LEFT     = 4;  //房主退出保留房间
+    IRRT     = 8;  //超时托管(不自动出牌) interrupt
+    WINTAX   = 16; //赢家付手续费
+    LOOKON   = 128; //允许旁观
+    HUNDRED  = 256; //百人场模式:不入桌,直接开赛
+}
+//创建私房
+message MkRule{
+    uint32 BaseScore    = 1;
+	sint32 PlayerNum    = 2; 
+	sint64 MinMoney     = 3; 
+	sint32 MoneyType    = 4; 
+	uint32 TaxRatio     = 5;  //台费/抽水 10000抽1000，10%，传10
+	uint32 OptionFlags  = 6;  //是否是私房/认输等
+    sint32 NumMax       = 7;  //游戏局数
+    sint64 KickMoney    = 8;  //金币踢出数量
+    sint32 Banker       = 9;  //上局赢家
+    sint64 MaxRate      = 10; //认输限制分数
+    string RoomID       = 11; //房间类型
+    sint64 MaxMoney     = 12; //入房最大限制
+    sint32 VipLv        = 13; //vip入房限制
+    sint64 RuleFlags    = 14; //具体规则 &1=是否是AA房卡
+
+    map<string,string> Extra  = 21; //自定义数据类型
+}
+//玩家状态
+message Player {
+    uint32 PID        = 1;  //玩家账号
+    sint64 Change     = 2;  //玩家的输赢总分
+    string Pass       = 3;  //房间号
+    string RoomID     = 4;  //房间类型
+    sint32 Status     = 5;  //桌子状态
+    sint64 Time       = 6;  //加入匹配时间
+    sint32 Newer      = 7;  //新手桌子
+    sint32 PlyNum     = 8;  //进入的房间人数 1V1=2，else=4
+    bool   Auto       = 9;  //自动入桌 
+    sint32 CyType     = 10; //货币类型
+}
+//桌子状态
+message Table{
+    uint32 Owner      = 1;  //房主
+    string Pass       = 2;  //房间号
+    sint64 Time       = 3;  //最后时间
+    MkRule Rule       = 4;  //规则
+    sint32 Status     = 5;  //桌子状态
+    sint32 GameID     = 6;  //游戏ID
+    string TableID    = 7;  //桌子号
+    sint32 NumCur     = 8;  //当前局数
+    sint32 NumPly     = 9;  //在桌人数
+    string RoomID     = 10; //房间类型
+    sint64 Count      = 11; //入桌倒计时
+    sint32 Newer      = 12; //新手桌子
+    string TrainID    = 13; //训练馆id
+    string Source     = 14; //模板id的名字
+    string Unique     = 15; //唯一值
+    string ServerAddr = 16; //服务器地址
+    
+    repeated uint32     PIDs   = 20; //玩家列表
+    map<int32, uint32>  Users  = 21; //桌子上的玩家 map<chair, pid>
+    map<uint32, sint64> Charge = 22; //等待充值的玩家
+    map<uint32, sint64> Cancel = 23; //发起解散 时间戳:发起解散者对应的解散时间 1:统一解散 -1:拒绝解散
+    map<uint32, sint64> Change = 24; //本场赛事输赢
+    map<uint32, sint64> TaxFee = 25; //台费相关
+    map<uint32, string> Names  = 26; //玩家昵称
+}
+//匹配记录
+message Record{
+    uint32 PID     = 1;
+    string RoomID  = 2;
+    sint32 Count   = 3; //匹配次数记录
+}
+//私房创建游戏
+message CreateGet{
+    MkRule Rule   = 1;  //房间规则
+    Table Table   = 2;  //房间信息
+}
+message CreateAck{
+   Common.ERROR nRet = 1;
+   Table Table = 2;  // 桌子信息
+   sint32 NVip = 3;  // 需要的vip等级
+}
+//私房开始游戏
+message StartGet{
+}
+message StartAck{
+    Common.ERROR nRet = 1;
+}
+
+//加入私房
+message MatchGet {
+    string IP         = 1;  // ip
+    string Pass       = 2;  // 房间号
+    sint32 PlyNum     = 3;  // 进入的房间人数 1V1=2，else=4
+    
+    string RoomID     = 11; // 游戏类型
+    //私房百人场使用
+    Table Table   = 21;  //房间信息
+
+    map<string, string> MapExtra = 31; //额外数据
+}
+
+message MatchAck {
+    Common.ERROR nRet = 1;
+    Table  Table      = 2;
+    sint32 NVip       = 3;  // 需要的vip等级
+}
+
+//退出私房
+message CancelGet {
+    sint32 Agree = 1;  //1:同意  -1:拒绝
+}
+
+message CancelAck {
+    Common.ERROR nRet = 1;
+    Table  Table      = 2;
+}
+
+
+//有玩家加入或离开
+message MatchUpdateNoti {
+    Type   Type               = 1;  //Type
+    Table  Table              = 11; //私房信息
+    map<uint32, int64> PlyMap = 12; //相关PID
+}
+//通知训练馆
+message PrivateNoti {
+    Type   Type               = 1;  //Type
+    Table  Table              = 11; //私房信息
+    map<uint32, int64> PlyMap = 12; //相关PID
+}
+// 通知桌子信息(断线重连会通知)
+message MatchTableNotify {
+    Table  Table    = 1; //私房信息
+    GSMgr.TableInfo stTable = 2;
+}
+
+// 认输
+message GiveUpGet{
+    string Pass       = 1;
+}
+message GiveUpAck{
+    Common.ERROR nRet = 1;
+    string Pass       = 2;
+}
+// 状态查询
+message StatusGet{
+    uint32 PID     = 1; 
+    string Pass    = 2;
+    string TrainID = 3;
+    sint32 GameID  = 4;
+    uint32 Owner   = 5;
+}
+message StatusAck{
+    sint32 CRet    = 1;
+    Status Status  = 2; 
+    Table  Table   = 3; //私房信息
+    repeated Table Tables   = 11; //私房信息
+}
+// 房间人数
+message PlyNumGet{
+    repeated string RoomIDs = 1;
+}
+message PlyNumAck{
+    sint32 CRet = 1;
+    map<string, sint32> PlyNums = 2;
+}
+// 解散房间
+message DismissGet{
+    string Pass = 1;
+}
+message DismissAck{
+    sint32 CRet = 1;
+    string Pass = 2;
+}
+// 大奖历史
+message BigItem {
+    uint32  PID     = 1;
+    sint64  Rate    = 2;  //数值/100为取两位倍数
+    sint64  Time    = 3;  
+    sint64  Amount  = 4;
+    sint32  GameID  = 5;
+    string  TableID = 6;
+    string  Extra   = 7;
+    bool    Show    = 8;  //展示 
+
+    bytes Record = 11;
+}
+message BigWinGet{
+    sint32  Page     = 1;
+    sint32  PageSize = 2;
+    sint32  PID      = 3;
+    sint32  GameID   = 4;
+}
+message BigWinAck{
+    sint32  CRet     = 1;
+    sint32  Page     = 2;
+    sint32  PageSize = 3;
+    repeated BigItem Bigs = 11;
+}
+service MatchService{
+    //创建私房
+    rpc Create (CreateGet) returns (CreateAck);
+    //开始私房
+    rpc Start  (StartGet)  returns (StartAck);
+    //加入房间
+    rpc Match  (MatchGet)  returns (MatchAck);
+    //退出房间
+    rpc Cancel (CancelGet) returns (CancelAck);
+    //认输
+    rpc GiveUp (GiveUpGet) returns (GiveUpAck); 
+    //状态查询
+    rpc Status (StatusGet) returns (StatusAck); 
+    //房间人数
+    rpc PlyNum (PlyNumGet) returns (PlyNumAck);
+    //解散房间
+    rpc Dismiss (DismissGet) returns (DismissAck);
+    //大赢家
+    rpc BigWin (BigWinGet) returns (BigWinAck);
+}

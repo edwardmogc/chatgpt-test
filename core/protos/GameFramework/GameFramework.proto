@@ -1,0 +1,150 @@
+syntax = "proto3";
+
+package GameFramework;
+option go_package = "proto/GameFramework";
+
+import "google/protobuf/any.proto";
+import "Common/Common.proto";
+
+message LoginReq {
+    string strTableID = 1;
+    string Addr       = 2;
+    sint32 CyType     = 3; //货币类型
+}
+
+message TableAllocateReq {
+    string strTableID = 1;
+    repeated uint32 vecPlayers = 2;
+    string strRule = 3;
+    string strExtra = 4;
+
+    map<uint32, string> mapPlayerExtra = 5;  // 玩家额外信息,key为pid，value为json字符串
+}
+
+message TableAllocateAck {
+    Common.ERROR ret = 1;
+}
+
+message TableDismissReq {
+    string strTableID = 1;
+}
+
+message TableDismissAck {
+    Common.ERROR ret = 1;
+}
+
+enum Opcode {
+    LOGIN_ACK = 0;          // 登录结果
+    LOGOUT_NOT = 1;         // 登出通知
+    JOIN_TABLE_REQ = 2;     // 入桌请求
+    JOIN_TABLE_ACK = 3;     // 入桌回复
+    JOIN_TABLE_NOT = 4;     // 入桌通知
+    DISCONNECT_NOT = 5;     // 同桌玩家掉线通知
+    TABLE_DISMISS_NOT = 6;  // 桌子解散通知
+    CHAT_REQ = 7;           // 游戏内固定聊天请求 ChatReq
+    CHAT_ACK = 8;           // 游戏内固定聊天回复 CommonAck
+    CHAT_NOT = 9;           // 游戏内固定聊天通知 ChatNoti
+    INTERACTIVE_REQ = 10;   // 互动请求 InteractiveReq
+    INTERACTIVE_ACK = 11;   // 互动回复 CommonAck
+    INTERACTIVE_NOT = 12;   // 互动通知 InteractiveNoti
+    FRAMEWORK_MAX = 1000;
+    KICK_PLY_REQ = 8000; //踢出玩家请求
+}
+
+message LoginAck {
+    Common.ERROR ret = 1;
+}
+
+message LogoutNoti {
+    enum Reason {
+        NONE = 0;         // 非服务器主动踢出
+        SERVER_STOP = 1;  // 服务器停服
+        DUP_LOGIN = 2;    // 重复登录前次踢出
+        NORMAL = 3;       // 正常结束退出
+    }
+    Reason reason = 1;
+}
+
+message GameMessage {
+    int32 nOpCode = 1;            // 协议号
+    google.protobuf.Any msg = 2;  // 实际消息
+}
+
+message JoinTableReq {
+    string strTableID = 3;  // 桌子id
+}
+
+message JoinTableAck {
+    Common.ERROR ret = 1;  // 加入结果
+}
+
+message JoinTableNoti {
+    uint32 nPID = 1;        // 加入桌子的玩家id
+    string strTableID = 2;  // 加入的桌子id
+    bool Auto       = 3; 
+}
+
+message DisconnectNoti {
+    uint32 nPID = 1;        // 掉线的玩家id
+    string strTableID = 2;  // 掉线的桌子id
+}
+
+message TableDismissNoti {
+    string strTableID = 1;  // 解散的桌子id
+}
+
+// 玩家提前离桌通知
+message PlayerLeaveNoti {
+    uint32 nPID = 1;        // 离开的玩家id
+    string strTableID = 2;  // 桌子id
+}
+
+// 通用回复
+message CommonAck {
+    Common.ERROR nRet = 1;  // 操作结果
+}
+
+message ChatReq {
+    string strContent = 1;  // 聊天内容（客户端自定义自解析）
+}
+
+message ChatNoti {
+    uint32 nPID = 1;        // 发送玩家pid
+    string strContent = 2;  // 聊天内容（客户端自定义自解析）
+}
+
+message InteractiveReq {
+    uint32 nTargetPID = 1;      // 目标玩家id
+    uint32 nInteractiveID = 2;  // 交互道具id(普通和十连使用不同的id)
+}
+
+message InteractiveNoti {
+    uint32 nPID = 1;            // 发送的玩家pid
+    uint32 nTargetPID = 2;      // 目标玩家id
+    uint32 nInteractiveID = 3;  // 交互道具id
+}
+
+message GameInteractiveNoti {
+    uint32 nInteractiveID = 1;  // 要添加的交互道具id
+    uint32 nCount = 2;          // 要添加的数量
+}
+
+message GameEffectNoti {
+    uint32 nEffectID = 1;  // 效果id
+    uint32 nCount = 2;     // 效果数量
+}
+// 踢出玩家
+message KickPlyGet{
+    uint32 nPID       = 1;  // 发送的玩家pid
+    string strTableID = 2;  // 桌子id
+}
+message KickPlyAck{
+    sint32 CRet = 1;
+}
+service GameService {
+    rpc DismissTable(TableDismissReq) returns (TableDismissAck);
+    rpc AllocateTable(TableAllocateReq) returns (TableAllocateAck);
+    rpc Login(LoginReq) returns (stream GameMessage);
+    rpc CallGameMethod(GameMessage) returns (GameMessage);
+    rpc KickPly(KickPlyGet) returns (KickPlyAck);
+}

@@ -1,0 +1,76 @@
+syntax = "proto3";
+
+package Login;
+option go_package = "protos/Login";
+
+//消息互动
+message IMLogin {
+	string Type         = 1;     //方法名, 如: Login.LoginGet
+	bytes  Datas        = 2;     //消息内容
+	string Extra        = 3;     //客户端自定义数据，原样返回
+}
+//心跳
+message EchoNot{ 
+	uint32 PID          = 1;    // 用户id
+}
+//埋点记录
+message MarkLog{
+	uint32 Type         = 1;    // 日志类型   
+	string Message      = 2;    // 日志内容
+	// 以下不用填写
+	string DB           = 11;   // 服务类型 
+	uint32 PID          = 12;   // 用户
+	sint32 AppID        = 13; 
+	sint64 Time         = 14; 
+	string Mac          = 15;
+	sint32 Channel      = 16;
+}
+//红点通知
+message RedPoint{
+	string Type = 1; //
+}
+//跨天通知
+message CrossDay{
+	uint32 PID          = 1;    // 用户id
+}
+//回流通知
+message ReLogin{
+	uint32 PID          = 1;    // 用户id
+}
+//通用通知
+message AllNoti {
+	string Type         = 1;     //数据类型，Type<=1:protobuf1 Type=2:json
+	uint32 PID          = 2;     //消息通知玩家
+	bytes  Datas        = 3;     //消息内容
+	sint32 AppID        = 4;     //消息内容
+
+	repeated uint32 VecPIDs = 11; //PID<=0时，发给指定的数组玩家
+}
+//错误通知
+message ErrNoti{
+	uint32 PID          = 1;     //消息通知玩家
+	sint32 Type         = 2;     //通知类型
+	string Desc         = 3;     //描述
+}
+//登陆游戏
+message LoginGet{
+	uint32 PID      = 1;        // 用户id
+	string Ticket   = 2;        // 用户Ticket
+	sint32 AppID    = 3;        // 登陆的app
+	string StrMac   = 4;        // mac地址
+	string StrIP    = 5;        // 上报ip
+	sint32 Channel  = 6;        // 渠道号
+}
+message LoginAck{
+	sint32 CRet		   = 1;	   
+	uint32 PID         = 2;    // 用户账号
+	sint64 Time        = 3;    // 当前服务器时间
+}
+//查询在线玩家
+message OnlineGet{
+	repeated uint32 VecPID  = 1;
+}
+message OnlineAck{
+	sint32 CRet		             = 1;
+	map<uint32, sint64> Results  = 2;
+}

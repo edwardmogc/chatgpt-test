@@ -1,0 +1,375 @@
+syntax = "proto3";
+
+package Authen;
+
+option go_package = "proto/MicroServices/Authen";
+
+message VerifyAnonymousReq
+{
+    uint32 nSource              = 1;    // 渠道ID
+    string strDeviceId          = 2;    // 设备ID
+    string strIP                = 3;    // 登录IP地址
+}
+
+message VerifyPhoneReq
+{
+    uint64 nPhone               = 1;    // 用户手机号
+    string strPassword          = 2;    // 用户密码
+    uint32 nSource              = 3;    // 渠道ID
+    string strDeviceId          = 4;    // 设备ID
+    string strIP                = 5;    // 登录IP地址
+    string strCodeType			= 6;	// 验证码的用途(为空则使用密码登录)
+    uint32 nCode                = 7;    // 短信验证码
+	string strPhone				= 8;	// 可选、手机号的字符串类型（兼容无法解析int64的环境）
+	string strToken				= 9;	// 手机号一键登录获取的登录Token(为空则使用手机验证码登录)
+	uint32 nTokenType			= 10;	// 手机号一键登录获取的登录Token类型，0：阿里云，1：微信
+}
+
+message VerifyThirdAccountReq
+{
+    string strCode              = 1;    // 由第三平台生成的换取token的code
+    uint32 nAuthenType          = 2;    // 1：微信，2：QQ，3：新浪，4:字节，5：苹果，6：微信小游戏，7：华为，8：华为AGC，9：QQ小游戏
+	uint32 nSource              = 3;    // 渠道ID
+	string strDeviceId          = 4;    // 设备ID
+	string strIP                = 5;    // 登录IP地址
+}
+
+message VerifyEmailReq
+{
+	string strEmail             = 1;    // 用户邮箱地址
+    string strPassword          = 2;    // 用户密码
+    uint32 nSource              = 3;    // 渠道ID
+    string strDeviceId          = 4;    // 设备ID
+    string strIP                = 5;    // 登录IP地址
+    string strCodeType			= 6;	// 验证码的用途(为空则使用密码登录)
+    uint32 nCode                = 7;    // 邮件验证码
+}
+
+message VerifyAccountAck
+{
+    sint32 nRet                 = 1;    // 0成功, 1首次验证(注册), -1失败, -6验证码错误, -7验证码失效, -8登录密码为空, -40002用户名不存在, -40004密码错误, -40012禁用IP, -40013禁用账号, -40015禁用设备, -40022账号已注销
+    string strTicket            = 2;    // 通行证, 失败为空
+    uint32 nPID                 = 3;    // 用户ID
+	string ext                  = 4;    // 扩展信息json格式数据
+	uint32 nCancelTime			= 5;	// 账号注销时间（仅-40022账号注销时有效）
+}
+
+message ModifyPasswordReq
+{
+    uint64 nPhone               = 1;    // 用户手机号
+    string strOldPassword       = 2;    // 用户原密码
+    string strNewPassword       = 3;    // 用户新密码
+    string strIP                = 4;    // 发送请求的IP地址
+	uint32 nSource              = 5;    // 渠道ID
+}
+
+message ModifyPasswordByGMReq
+{
+    uint64 nPhone               = 1;    // 用户手机号
+    string strNewPassword       = 2;    // 用户新密码
+	uint32 nAppID				= 3;	// 应用ID(系统分配)
+	string strAppSecret			= 4;	// 应用秘钥(系统分配)
+	uint32 nSource              = 5;    // 渠道ID
+}
+
+message ModifyPasswordAck
+{
+    sint32 nRet                 = 1;    // 0成功, -1失败, -10002应用ID未注册, -10003应用秘钥错误, -10004秘钥失效, -40002用户名不存在, -40004原密码错误
+}
+
+message ThirdInfo
+{
+    string strThirdAccount      = 1;    // 第三方账号信息
+    uint32 nThirdAccountType    = 2;    // 第三方账号类型，1：微信，2：QQ，3：新浪，4:字节，5：苹果，6：微信小游戏，7：华为
+}
+message Account
+{
+    uint32 nPID                 = 1;    // 用户ID
+    uint64 nPhone               = 2;    // 用户注册的手机号
+    uint32 nSource              = 3;    // 用户注册渠道
+    repeated ThirdInfo infos    = 4;    // 绑定的第三方账号
+}
+
+message UnidQueryReq
+{
+    sint64 nAccount             = 1;    // nAccount>0为手机号，nAccount<0为nPID
+    string strPassword          = 2;    // 是否验证密码，为空为不验证密码
+    bool bIncludeThird          = 3;    // 是否查询绑定的第三方账号，0：不查询， 1：查询
+}
+
+message UnidQueryAck
+{
+    sint32 nRet                 = 1;    // 0成功, -1失败, -8参数错误, -40002用户id或帐号不存在
+    uint32 nPID                 = 2;    // 用户ID
+    uint64 nPhone               = 3;    // 用户注册的手机号
+    uint32 nSource              = 4;    // 用户注册渠道
+    repeated ThirdInfo Thirds   = 5;    // 绑定的第三方账号
+    string strPhone				= 6;	// 手机号的字符串类型（兼容无法解析int64的环境）
+	uint32 nRegTime				= 7;	// 账号注册时间
+	string strRegIP				= 8;	// 账号注册IP
+	string strRegDevice			= 9;	// 账号注册设备
+}
+
+message ModifyPhoneReq
+{
+    uint64 nOldPhone            = 1;    // 原手机号
+    string strOldPassword       = 2;    // 原密码
+    uint64 nNewPhone            = 3;    // 新手机号
+	string strCodeType			= 4;	// 验证码的用途(为空则使用密码登录)
+    uint32 nCode                = 5;    // 短信验证码
+	string strIP                = 6;    // 发送请求的IP地址
+	uint32 nSource              = 7;    // 渠道ID
+}
+
+message ModifyPhoneByGMReq
+{
+    uint64 nOldPhone            = 1;    // 原手机号
+    uint64 nNewPhone            = 2;    // 新手机号
+	uint32 nAppID				= 3;	// 应用ID(系统分配)
+	string strAppSecret			= 4;	// 应用秘钥(系统分配)
+	uint32 nSource              = 5;    // 渠道ID
+}
+
+message ModifyPhoneAck
+{
+    sint32 nRet                 = 1;    // 0成功, -1失败, -6验证码错误, -7验证码失效, -10002应用ID未注册, -10003应用秘钥错误, -10004秘钥失效, -10005未授权接口调用, -40001新账号已经存在, -40002修改账号不存在, -40004密码错误
+}
+
+message BindPhoneReq
+{
+    uint32 nPID                 = 1;    // 用户ID
+    uint64 nPhone               = 2;    // 手机号
+    string strPassword          = 3;    // 密码不为空则在绑定手机的同时修改密码（用于第三方账号登录时设定密码）
+	string strCodeType			= 4;	// 验证码的用途
+    uint32 nCode                = 5;    // 短信验证码
+	string strPhone				= 6;	// 可选、手机号的字符串类型（兼容无法解析int64的环境）
+	bool bForce					= 7;	// 是否强制绑定手机，true：将以前绑定了该手机号的账号解绑并绑定到新账号上，false：只能绑定未使用的手机号
+}
+
+message BindPhoneAck
+{
+    uint32 nPID                 = 1;    // 用户ID
+    sint32 nRet                 = 2;    // 0成功, -1失败, -6验证码错误, -7验证码失效, -40006注册账号已绑定过手机, -40007手机已被注册
+    uint64 nPhone               = 3;    // 绑定成功后的手机号
+	string strPhone				= 4;	// 手机号的字符串类型（兼容无法解析int64的环境）
+}
+
+message BindEmailReq
+{
+    uint32 nPID                 = 1;    // 用户ID
+    string strEmail             = 2;    // 邮箱
+	string strCodeType			= 3;	// 验证码的用途(如果为空则不验证验证码)
+    uint32 nCode                = 4;    // 邮箱验证码
+	string strPassword          = 5;    // 密码不为空则在绑定邮箱的同时设定密码
+}
+
+message BindEmailAck
+{
+    uint32 nPID                 = 1;    // 用户ID
+    sint32 nRet                 = 2;    // 0成功, -1失败, -6验证码错误, -7验证码失效, -10邮箱错误, -40027账号已绑定邮箱, -40028邮箱已绑定账号
+    string strEmail             = 3;    // 绑定成功后的邮箱
+}
+
+message BindThirdAccountReq
+{
+    uint32 nPID                 = 1;    // 用户ID
+    string strCode              = 2;    // 由第三平台生成的换取token的code
+    uint32 nAuthenType          = 3;    // 1：微信，2：QQ，3：新浪，4:字节，5：苹果，6：微信小游戏，7：华为
+}
+
+message BindThirdAccountAck
+{
+    uint32 nPID                 = 1;    // 用户ID
+    sint32 nRet                 = 2;    // 0成功, 1成功且是第一次绑定, -1失败, -40009重复绑定, -40010该第三方账号已绑定
+    string strAccount           = 3;    // 绑定成功后的第三方账号
+	string strToken				= 4;	// 绑定成功后的第三方账号的令牌
+	uint32 nAuthenType          = 5;    // 1：微信，2：QQ，3：新浪，4:字节，5：苹果， 6：微信小游戏，7：华为
+}
+
+message UnbindThirdAccountReq
+{
+    uint32 nPID                 = 1;    // 用户ID
+    uint32 nAuthenType          = 2;    // 1：微信，2：QQ，3：新浪，4:字节，5：苹果， 6：微信小游戏，7：华为
+}
+
+message UnbindThirdAccountAck
+{
+    uint32 nPID                 = 1;    // 用户ID
+    sint32 nRet                 = 2;    // 0成功, -1失败, -40011未绑定
+}
+
+message GetCodeReq
+{
+	string strCodeType			= 1;	// 验证码的用途（请求方自定义标识）
+    uint64 nPhoneNum          	= 2;    // 手机号
+	string strPhone				= 3;	// 可选、手机号的字符串类型（兼容无法解析int64的环境）
+}
+
+message GetEmailCodeReq
+{
+	string strCodeType			= 1;	// 验证码的用途（请求方自定义标识）
+	string strEmail				= 2;	// 接收Email地址
+	string strLang				= 3;	// 邮件语言
+}
+
+message GetCodeAck
+{
+    sint32 nRet                 = 1;    // 0成功, -1失败, -4发送频率过快, -5手机号错误
+	string strCodeType			= 2;	// 验证码的用途
+}
+
+message FindPasswordReq
+{
+	uint64 nPhone               = 1;    // 绑定的手机号
+	uint32 nCode                = 2;    // 短信验证码
+    string strCodeType          = 3;	// 验证码的用途
+	string strNewPassword       = 4;    // 新密码
+	uint32 nSource              = 5;    // 渠道ID
+}
+
+message FindPasswordByEmailReq
+{
+	string strEmail             = 1;    // 用户邮箱地址
+    uint32 nCode                = 2;    // 邮件验证码
+    string strCodeType			= 3;	// 验证码的用途
+    string strNewPassword       = 4;    // 新密码
+    uint32 nSource              = 5;    // 渠道ID
+}
+
+message FindPasswordAck
+{
+	sint32 nRet                 = 1;    // 0成功, -1失败, -5手机号错误, -6验证码错误, -7验证码失效, -10邮箱错误, -40008该手机号无绑定账号, -40026账号未绑定邮箱
+}
+
+message BindCPAccountReq
+{
+    uint32 nPID                 = 1;    // 用户的ID
+    string strTicket            = 2;    // 通行证
+    uint32 nAppID               = 3;    // 第三方应用ID
+    string strCPUserID          = 4;    // 第三方用户账号ID
+    string strCPUserNickname    = 5;    // 第三方用户账号昵称
+	uint64 nPhone				= 6;	// 用户手机号，用于查询该手机账号是否存在，是否绑定过第三方账号
+	string strSource            = 7;    // 来源标识
+    string strDeviceId          = 8;    // 设备ID
+    string strIP                = 9;    // 登录IP地址
+}
+
+message BindCPAccountAck
+{
+    sint32 nRet                 = 1;    // 0绑定成功, -1失败, -2通行证错误, -3通行证失效, -40017CP账号信息已经存在, -40019平台账号已经绑定过CP游戏账号, -40020手机平台账号已经绑定过CP游戏账号, -40021手机平台账号和登录账号是同账号
+    uint32 nPID                 = 2;    // 通过请求的appid和strCPUserID查找到的pid，可能与请求的pid不同
+                                        // 此时客户端需要请求此pid详情，用于展示头像、昵称、手机号、微信号等，让用户切换账号
+    string strTicket            = 3;    // 通过请求的appid和strCPUserID查找到的pid对应的平台通行证
+    uint32 nAppID               = 4;    // 第三方应用ID
+    string strCPUserID          = 5;    // 第三方用户账号ID
+    string strCPUserNickname    = 6;    // 第三方用户账号昵称
+}
+
+message UnbindCPAccountReq
+{
+    uint32 nPID                 = 1;    // 用户的ID
+    string strTicket            = 2;    // 通行证(为空时判断nAppID和strAppSecret是否合法，代表后台操作)
+	uint32 nAppID				= 3;	// 应用ID(系统分配)
+	string strAppSecret			= 4;	// 应用秘钥(系统分配)
+    uint32 nCPAppID             = 5;    // 第三方应用ID
+    string strCPUserID          = 6;    // 第三方用户账号ID
+}
+
+message UnbindCPAccountAck
+{
+    sint32 nRet                 = 1;    // 0解绑成功, -1失败, -2通行证错误, -3通行证失效, -10002应用ID未注册, -10003应用秘钥错误, -10004秘钥失效, -10005未授权接口调用, -40018CP账号信息不存在
+    uint32 nPID                 = 2;    // 用户的ID
+}
+
+message QueryByCPAccountReq
+{
+    uint32 nAppID               = 1;    // 第三方应用ID
+    string strCPUserID          = 2;    // 第三方用户账号ID
+}
+
+message QueryByCPAccountAck
+{
+    sint32 nRet                 = 1;    // 0成功, -1失败, -40018CP账号信息不存在
+    uint32 nPID                 = 2;    // 查询到的用户平台ID
+	string strTicket            = 3;    // 通过请求的appid和strCPUserID查找到的pid对应的平台通行证
+}
+
+message QueryCPAccountByPIDReq
+{
+    uint32 nAppID               = 1;    // 第三方应用ID
+    uint32 nPID          		= 2;    // 用户平台ID
+}
+
+message QueryCPAccountByPIDAck
+{
+	sint32 nRet                 = 1;    // 0成功, -1失败, -40018CP账号信息不存在
+    uint32 nAppID               = 2;    // 第三方应用ID
+    string strCPUserID          = 3;    // 第三方用户账号ID
+	string strCPName			= 4;	// 第三方用户账号昵称
+}
+
+message CancelAccountReq
+{
+    uint32 nPID                 = 1;    // 用户的ID
+    string strTicket            = 2;    // 通行证
+	string strIP                = 3;    // 登录IP地址
+	uint32 nAppID				= 4;	// 发起操作的应用ID
+}
+
+message CancelAccountAck
+{
+    uint32 nPID                 = 1;    // 用户的ID
+    sint32 nRet                 = 2;    // 0成功, -1失败, -2通行证错误, -3通行证失效, -40002帐号不存在
+}
+
+message QueryByDeviceReq
+{
+	string strDevice			= 1;	// 查询的设备号
+}
+
+message QueryByDeviceAck
+{
+	repeated Account infos		= 1;	// 查询的所有账号信息
+}
+
+message AccountChangeNotify
+{
+	uint32 nPID					= 1;	// 变化用户的ID
+	uint32 nType				= 2;	// 变化类型: 1密码修改, 2账号名修改, 3绑定第三方账号, 4解绑第三方账号, 5绑定合作方账号, 6解绑合作方账号
+	string strDetail			= 3;	// 变化前内容
+	uint32 nAppID				= 4;	// 授权操作的应用ID，0用户操作
+	string strIP				= 5;	// 变化产生的IP来源
+	uint32 nTime				= 6;	// 变动时间
+}
+
+message AccountVerifyNotify
+{
+	uint32 nPID					= 1;	// 登录用户的ID
+	uint32 nType				= 2;	// 登录类型: 1匿名, 2手机号, 3微信, 4QQ, 5新浪, 6字节跳动, 7苹果, 8微信小游戏，9：华为
+	uint32 nSource              = 3;    // 登录渠道ID
+	string strIP				= 4;	// 登录IP来源
+	string strDeviceId			= 5;	// 登录设备
+	uint32 nTime				= 6;	// 登录时间
+}
+
+message AccountRegNotify
+{
+	uint32 nPID					= 1;	// 注册用户的ID
+	uint32 nType				= 2;	// 注册类型: 1匿名, 2手机号, 3微信, 4QQ, 5新浪, 6字节跳动, 7苹果, 8微信小游戏，9：华为
+	uint64 nPhone               = 3;    // 注册的手机号
+	uint32 nSource              = 4;    // 注册渠道ID
+	uint32 nTime				= 5;	// 注册时间
+}
+
+message QueryByThirdAccountReq
+{
+	string strThirdAccount      = 1;    // 第三方账号信息
+    uint32 nThirdAccountType    = 2;    // 第三方账号类型，1：微信，2：QQ，3：新浪，4:字节，5：苹果，6：微信小游戏，7：华为, 8: AGC, 9: QQ小游戏, 10: 联想, 11: Hellobike, 12: 支付宝小游戏, 13: UC小游戏, 14: 邮箱
+}
+
+message QueryByThirdAccountAck
+{
+	sint32 nRet                 = 1;    // 0成功, -1失败, -2通行证错误, -3通行证失效, -40002帐号不存在
+	Account info				= 2;	// 查询账号信息
+}
+

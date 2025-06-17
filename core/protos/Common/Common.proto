@@ -1,0 +1,205 @@
+syntax = "proto3";
+
+package Common;
+option go_package = "proto/Common";
+
+// 增删改查
+enum Motify { 
+    QUERYS = 0;
+	CREATE = 1;
+	DELETE = 2;
+	CHANGE = 4; 
+}
+
+// 通用状态
+enum Status {
+    QUERY     = 0; 
+    JOIN      = 1; //参加、加入、请求加分
+    EXIT      = 2; //退出、取消、请求下分
+    WAIT      = 4; //等待审批、等待发货
+    FAIL      = 8; //流程失败
+    VERIFY    = 16; //人工审核
+    REJECT    = 32; //人工拒绝
+    CANCEL    = 64; //取消
+    OVER      = 128; //成功、正常结束
+}
+
+enum ERROR {
+    SUCCESS = 0;
+    E_FAIL = -1;
+
+    // GameService
+    E_TABLE_NOT_EXISTS = -2;
+
+    E_GAME_PLAYING   = -11; //玩家正在游戏对局中或未从第三方退出
+
+    E_ALLOCATE_NO_TABLE = -100;
+    E_PLAYER_NO_PLAYING_TABLE = -101;  // 玩家没有正在玩的游戏(可能是玩家连游服时游戏已经结束了)
+    E_PLAYER_IN_CANCEL = -102;  // 解散中
+
+    // GateService
+    E_GATE_KICK_SERVER_CLOSED = -200;       // 服务器维护
+    E_GATE_KICK_DUPLICATE_LOGIN = -201;     // 重复登录
+    E_ANTI_ADDICTION_NO_REALNAME = -202;    // 防沉迷未实名认证
+    E_ANTI_ADDICTION_NOT_PLAY_TIME = -203;  // 防沉迷不在游戏时间段
+    E_GATE_KICK_BANNED = -204;              // 账号被封禁,strMsg内容为封禁到期时间戳, {"until":1666064543}
+
+    // MatchMaker
+    E_MM_ALREADY_HAVE_TICKET = -1000;      // 已经在匹配中(ticket已创建，还没生成match)
+    E_MM_HAS_TABLE_TO_PLAY = -1001;        // 有匹配的桌子还没打完
+    E_MM_STILL_MATCHING = -1002;           // 已经在匹配中(已经生成match，还没匹配到足够的人)
+    E_MM_TICKET_NOT_EXIST = -1003;         // 没有开始过匹配
+    E_MM_GAME_MONEY_OUT_OF_RANGE = -1004;  // 游戏币超出限制范围
+    E_MM_PLAYER_OVER = -1101;   // 人满了
+    E_MM_PLAYER_EMPTY = -1102;  // 人不满
+    E_MM_ALREADY_START = -1103; // 游戏已经开始了
+    E_MM_NUMS_FULL     = -1104; // 创建的桌子数满了
+
+    // Currency
+    E_CY_LOCK_FAILED = -2000;
+    E_CY_NOT_LOCKED = -2001;
+    E_CY_LOCKED = -2002;
+    E_CY_NOT_ENOUGH = -2003;
+
+    // Task
+    E_TASK_NOT_EXISTS = -3000;        // 任务不存在
+    E_TASK_ALREADY_ACCEPTED = -3001;  // 任务已经接过了
+
+    // Award
+    E_AWARD_NOT_EXISTS = -4000;  // 奖励id不存在
+
+    // Relieve
+    E_RELIEVE_TOO_MUCH_MONEY = -5000;    // 钱足够了，不能领取救济金
+    E_RELIEVE_NOT_ENOUGH_TIMES = -5001;  // 剩余次数不足
+
+    // Signin
+    E_SIGNIN_HAS_SIGNINED_TODAY = -6001;        // 今天已经签到过了
+    E_SIGNIN_NOT_SIGNINED_TODAY = -6002;        // 今天还没签到，不能预约
+    E_SIGNIN_CANT_PRESIGNIN_ON_SUNDAY = -6003;  // 周日不能预约
+    E_SIGNIN_ALREADY_PRESIGNINED = -6004;       // 已经预约过了
+
+    // Ranking
+    E_RANKING_GIFT_NOT_ENOUGH_SCORE = -7000;  // 积分不够不能领取
+    E_RANKING_GIFT_STILL_COOLDOWN = -7001;    // 还在冷却中
+
+    // ShakeShake
+    E_SHAKE_NOT_ENOUGH_SHAKE_TIMES = -9001;  // 今天摇一摇次数用完
+
+    // LoginAward
+    E_LOGIN_AWARD_NOT_EXIST_IN_CONFIG = -10001;  // 配置文件中没有对应的奖励id
+    E_LOGIN_AWARD_HAS_APPLYED = -10002;          // 今天已领取过该时间段奖励
+
+    // VIP
+    E_VIP_AWARD_HAS_BEEN_RECEIVED = -11001;           // 奖励已经领取过了
+    E_VIP_LEVEL_NOT_ENOUGH = -11002;                  // vip等级不足
+    E_VIP_NO_DAILY_AWARD_FOR_CURRENT_LEVEL = -11003;  // 当前vip等级没有每日奖励
+    E_VIP_BET_NOT_ENOUGH = -11004;  // 当前vip等级没有每日奖励
+
+    // Tutorial
+    E_TUTORIAL_ALREADY_COMPLETED = -12001;  // 引导已经完成过了
+
+    // RedeemCode
+    E_REDEEM_CODE_NOT_EXISTS = -12100;        // 兑换码不存在
+    E_REDEEM_CODE_ALREADY_REDEEMED = -12101;  // 玩家已经兑换过该兑换码了
+    E_REDEEM_CODE_ALREADY_USED = -12102;      // 兑换码已经被别人用过了
+    E_REDEEM_CODE_WRONG_SOURCE = -12103;      // 兑换码和玩家渠道不一致
+    E_REDEEM_CODE_ALREADY_TYPE = -12104;      // 已经兑换过同类型兑换码了
+    E_REDEEM_CODE_LIMIT_TYPE   = -12105;       // 兑换条件不满足
+    // Invite
+    E_INVITE_NO_ID_CARD = -12200;            // 还没有实名认证
+    E_INVITE_NOT_ENOUGH_LEVEL = -12201;      // 玩家等级不足
+    E_INVITE_WRONG_CODE = -12202;            // 错误的邀请码
+    E_INVITE_ALREADY_HAVE_INVITER = -12203;  // 已经输入过邀请码了
+    E_INVITE_CAN_NOT_INVITE_SELF = -12204;   // 不能邀请自己
+
+    E_AD_REWARD_TIMES_LIMITED = -12300;  // 激励视频次数超过上限了
+
+    // Rebate 
+    E_REBATE_NONE_AWARD     =  -12401; //没有奖励     
+    // Exchange 
+    E_EXCHANGE_LIMIT     =  -12501; //当天限制     
+    E_EXCHANGE_PAY       =  -12502; //兑换失败
+    E_EXCHANGE_UNMOTIFY  =  -12503; //修改限制，每月修改一次
+    E_EXCHANGE_LESS      =  -12504; //每日提现额度不足
+    E_EXCHANGE_RENAME    =  -12505; //名称重复
+    E_EXCHANGE_BETLESS   =  -12506; //投注额度不足
+    E_EXCHANGE_TIMES     =  -12507; //提现次数限制
+}
+
+enum CommonNotifyOpcode {
+    NOTIFY_UNKNOWN = 0;
+    KICKOUT_NOTI = 1;             // 玩家被服务器踢出通知 Common.CommonResponse
+    LOGIN_NOTI = 2;               // 玩家登录成功通知
+    IM_LOGIN_NOTI = 888;          // 通用通知消息
+    MM_MATCH_INFO_NOTI = 1000;    // 匹配服匹配状态通知 MatchMaker.MatchUpdateNoti
+    MM_MATCH_RESULT_NOTI = 1001;  // 匹配服匹配结果通知 MatchMaker.MatchTableNotify
+    MM_MATCH_OVER_NOTI = 1002;    // 匹配游戏结束通知 MatchMaker.MatchOverNotify
+    MM_MATCH_USER_NOTI = 1101;    // 匹配玩家充值通知 Maker.MatchUserNoti
+    MM_MATCH_END_NOTI  = 1102;    // 结果通知
+
+    MATCH_INFO_NOTI   = 1200;    // 匹配服匹配状态通知 MatchMaker.MatchUpdateNoti
+    MATCH_RESULT_NOTI = 1201;    // 匹配服匹配结果通知 MatchMaker.MatchTableNotify
+    MATCH_OVER_NOTI   = 1202;    // 匹配游戏结束通知 MatchMaker.MatchOverNotify
+    MATCH_USER_NOTI   = 1203;    // 匹配玩家充值通知 Maker.MatchUserNoti
+    MATCH_END_NOTI    = 1204;    // 结果通知
+
+    CY_CURRENCY_CHANGE_NOTI = 2001;  // 货币变化通知 Currency.CyChangeNoti
+
+    TASK_UPDATE_NOTI = 3000;    // 任务变化通知 Task.TaskUpdateNoti
+    TASK_COMPLETE_NOTI = 3001;  // 可领取任务通知 Task.CompleteTaskNoti
+
+    RELIEVE_INFO_NOTI = 5001;  // 救济金数据通知 Activities.Relieve.RelieveInfoNoti
+    SIGNIN_INFO_NOTI = 6001;   // 签到通知 Signin.SigninInfoNotify
+    MAIL_INFO_NOTI = 7001;     // 邮件通知 Mail.UnReadInfoNotify
+
+    ACHV_REPLACE_NOTI = 8001;  // 成就任务替换通知 Achievement.AchvTaskReplaceNoti
+
+    CHARGE_GIFT_NOTI = 9001;      // 首充礼包
+    SHAKE_SHAKE_NOTI = 10001;     // 摇一摇
+    SOLICIT_WEALTH_NOTI = 11001;  // 招财
+
+    PAY_CHANGE_NOTI = 12001;   // Pay货币变化通知 Pay.AmountChangeNotify
+    ITEM_CHANGE_NOTI = 12002;  // Shop道具变化通知 Shop.UserItemChangeNotify
+
+    PRIVILEGE_PAY_NOTI = 13001;                // 周卡、月卡购买通知
+    PRIVILEGE_CARDS_INFO_NOTI = 13002;         // 周卡、月卡信息通知
+    PRIVILEGE_WEEKLY_CARD_INFO_NOTI = 13003;   // 周卡信息通知
+    PRIVILEGE_MONTHLY_CARD_INFO_NOTI = 13004;  // 月卡信息通知
+
+    STORE_ORDER_COMPLETE = 14001;  // 商城订单完成通知 Common.CommonNoti
+
+    AWARD_INFO_NOTI = 15001;        // 获得奖励通知 Award.AwardResultNoti
+    BULLETIN_NOTI = 16001;          // 跑马灯通知 Bulletin.BulletinNoti
+    ROULETTE_INFO_NOTI = 17001;     // 大转盘通知
+    LOGIN_AWARD_INGO_NOTI = 18001;  // 定时登陆通知
+    ITEM_USE_INFO_NOTI = 19001;     // 道具服务通知
+
+    DAILY_TASK_ACTIVITY_CONFIG_NOTI = 20001;  // 每日任务活跃度配置通知 DailyTask.ActivityConfigNoti
+
+    VIP_INFO_NOTI = 20002;  // VIP特权等级信息变化通知 Vip.VipInfo
+
+    LUCKY_GIFT_INFO_NOTI = 20100;  // 幸运礼包信息通知
+
+    RANKING_NEW_SEASON_NOTI = 20200;  // 排位赛新赛季通知 Ranking.NewSeasonNoti
+
+    TUTORIAL_STATUS_NOTI = 20300;  // 新手引导状态通知
+
+    TOURNAMENT_TABLE_NOTI = 20301;  // 专业赛桌子通知 Tournament.TournamentTableNoti
+
+    DAILY_FIRST_PATTERN_NOTI = 20400;  // 每日争先变化通知 DailyFirst.PatternInfoList
+    DAILY_FIRST_PLAYER_NOTI = 20401;   // 每日争先个人数据变化通知 DailyFirst.PlayerInfo
+
+    AD_REWARD_PLAYER_INFO = 20410;  // 激励视频个人数据通知 AdReward.AdRewardInfo
+
+    THIRD_LIST_REFRESH_NOTI = 20501; // 第三方游戏列表刷新通知
+    THIRD_ENTER_ACK_NOTI    = 20502; // 进入游戏通知
+}
+
+message CommonResponse {
+    ERROR nRet = 1;
+    string strMsg = 2;  // 额外信息
+}
+
+message CommonNoti {
+    string strData = 1;  // 通知数据，通常为json字符串
+}

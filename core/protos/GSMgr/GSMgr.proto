@@ -1,0 +1,106 @@
+syntax = "proto3";
+
+package GSMgr;
+option go_package = "proto/GSMgr";
+
+import "Common/Common.proto";
+
+enum TableStatus {
+    INIT = 0;
+    PLAY = 1;
+    OVER = 2;
+    CANCELED = 3;
+}
+
+// allocate table
+message AllocateTableReq {
+    uint32 nGameID = 1;                      // 游戏id
+    repeated uint32 arrPlayers = 2;          // 参与的玩家id列表
+    string strRule = 3;                      // 游戏规则
+    string strExtra = 4;                     // 额外信息，例如比赛信息
+    map<uint32, string> mapPlayerExtra = 5;  // 玩家额外信息,key为pid，value为json字符串
+}
+
+message ServerInfo {
+    uint32 nGameID = 1;        // 游戏id
+    string strServerName = 2;  // 服务名字
+    string strServerID = 3;    // 服务id(注册时可以不传)
+    string strAddr = 4;        // 服务连接地址
+    uint32 nMaxTable = 5;      // 最大桌子数
+}
+
+message TableInfoReq {
+    string strTableID = 1;
+}
+message TableInfo {
+    string strTableID = 1;           // 桌子id
+    repeated uint32 arrPlayers = 2;  // 参与的玩家id列表
+    ServerInfo stServerInfo = 3;     // 服务器信息
+    string strRule = 4;              // 游戏规则
+    string strExtra = 5;             // 额外信息，例如比赛信息
+    int32 nStatus = 6;
+
+    map<uint32, string> mapPlayerExtra = 7;  // 玩家额外信息,key为pid，value为json字符串
+}
+
+message AllocateTableAck {
+    Common.ERROR nRet = 1;  // 操作结果
+    TableInfo stTable = 2;  // 桌子信息
+}
+
+message RegisterGSReq {
+    ServerInfo stServerInfo = 1;
+    bool bReconnect = 2;
+}
+
+message RegisterGSAck {
+    Common.ERROR nRet = 1;
+}
+
+message TableOverReq {
+    string strTableID = 1;
+}
+
+message TableOverAck {
+    Common.ERROR nRet = 1;
+}
+
+message TableStatusChangeNoti {
+    string strTableID = 1;
+    int32 nStatus = 2;
+}
+
+message DismissTableReq {
+    string strTableID = 1;
+}
+
+message DismissTableAck {
+    Common.ERROR nRet = 1;
+}
+
+message TableNumReq {
+    uint32 nGameID = 1;  // 游戏id
+}
+
+message TableNumNoti {
+    uint32 nGameID = 1;  // 游戏id
+    uint32 nTable = 2;   // 当前剩余桌子数
+}
+// 踢出玩家
+message KickPlyGet{
+    uint32 nPID       = 1;  // 发送的玩家pid
+    string strTableID = 2;  // 桌子id
+}
+message KickPlyAck{
+    sint32 CRet = 1;
+}
+
+service GSMgrServer {
+    rpc AllocateTable(AllocateTableReq) returns (AllocateTableAck);
+    rpc DismissTable(DismissTableReq) returns (DismissTableAck);
+    rpc GetTableInfo(TableInfoReq) returns (TableInfo);
+    rpc RegisterGS(RegisterGSReq) returns (RegisterGSAck);
+    rpc TableOver(TableOverReq) returns (TableOverAck);
+    rpc GetTableNum(TableNumReq) returns (TableNumNoti);
+    rpc KickPly(KickPlyGet) returns (KickPlyAck);
+}

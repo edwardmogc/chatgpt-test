@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package Http;
+option go_package = "proto/Http";
+
+message LoginInfo{ 
+    string IP      = 1;
+    string Country = 2;
+    string Extra   = 3;
+    string Continent = 11;
+}
+//login game
+message LoginGet {
+    uint32 Source  = 1; //来源
+    string Version = 2; //
+    string Channel = 3; //渠道
+}
+message LoginAck{
+    sint32 CRet    = 1; //-1:error 0:normal 1:ignore
+    uint32 Source  = 2; //来源
+    LoginInfo Info = 11; 
+}
+// 查询ip所属
+message CheckGet{
+    string IP = 1;
+}
+message CheckAck{
+    sint32 CRet    = 1; //-1:error 0:normal 1:ignore
+    LoginInfo Info = 11; 
+}

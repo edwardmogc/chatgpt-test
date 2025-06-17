@@ -1,0 +1,119 @@
+syntax = "proto3";
+package Betsize;
+option go_package = "game/Betsize/proto";
+
+enum Result {
+    SUCCESS   = 0;
+    FAIL      = 1;
+    E_NOT_BET = 2; //不是下注阶段
+    E_ERR_BET = 3; //错误的下注
+    E_ONE_BET = 4; //只能下注一边
+}
+
+enum Type {
+    NONE  = 0;
+    LEFT  = 1; //左边下注
+    RIGHT = 2; //右边下注
+}
+
+// 通用回复
+message CommonAck {
+    Result CRet = 1;  // 操作结果
+}
+message BetCfg{
+    sint32 Index  = 1; //下注标识
+    sint64 BetNum = 2; //下注金额
+}
+//投注数据
+message Groups{
+    uint32 PID            = 1;  //出牌的id
+    sint32 Type           = 2;  //投注类型Type 左:1 右:2
+    sint32 Rate           = 3;  // Rate/100=返还倍数
+    
+    sint32 PlyNum         = 11; //下注人数
+    sint64 BetNum         = 12; //下注金额
+}
+//桌子数据 
+message TableInfo {
+    sint32 Banker      = 1;              // 庄家方位
+    sint32 BankerScore = 2;              // 庄家钱数
+    sint32 MoneyType   = 3;              // 游戏币类型
+    sint32 Status      = 4;              // 桌子状态
+    sint32 Round       = 5;              // 桌子局数
+    sint64 TimeCur     = 6;              // 当前时间
+    sint64 TimeEnd     = 7;              // 结束时间
+    sint64 Serial      = 8;              // 当前局数编号
+    
+    map<int32, Groups> BetAll  = 12;     // 投注详情
+}
+
+//玩家历史数据
+message Betsize{
+    uint32 PID    = 1;
+    sint64 Serial = 2; //局数编号
+    sint64 Time   = 3;
+    sint64 Win    = 4;
+    sint64 Bet    = 5;
+    sint32 Type   = 6;
+
+    repeated sint32 Dices = 11;
+}
+message Record{
+    sint64 Serial = 1; //局数编号
+    sint64 Time   = 2;
+    repeated sint32 Dices = 11;
+}
+//游戏开始
+message GameStartNoti {
+}
+//通知骰子点数
+message DiceNumNoti{
+    bool Big = 1;
+    repeated sint32 Dices = 2;
+}
+// 玩家执行操作请求
+message PlayerOpGet {
+    sint32 Operate       = 1;      // 实际执行的操作
+    uint32 SerialID      = 3;      // 操作序列号
+
+    map<int32, Groups> BetCur = 11;   // 本次下注数据
+}
+//玩家操作广播
+message PlayerOpResult {
+    uint32 PID       = 1;           // 操作人的座位
+    sint32 Operate   = 2;           // 执行的操作
+
+    map<int32, Groups> BetCur = 11;    // 本次下注数据
+    map<int32, Groups> BetAll = 12;    // 总的下注数据
+}
+//玩家金币变动
+message GameMoneyChange {
+    sint32 nReason = 1;                     // 变化原因 用Operation表示类型
+    map<sint32, int64> Changes = 11;         // key: 变动人的座位号 value: 变化量
+    map<sint32, int64> Scores  = 12;         // key: 变动人的座位号 value: 变化后的量
+}
+//断线重连
+message PlyInfo{
+    uint32 PID       = 1;              // 操作人的座位
+    sint32 CyType    = 2;              // 货币类型
+    map<int32, Groups> BetAll = 21;    // 总的下注数据
+}
+
+message ReconnectNoti {
+    PlyInfo PlyInfo            = 11;
+    TableInfo TableInfo        = 12;    // 桌子数据
+    map<int32, BetCfg> BetCfg  = 13;     // 投注类型配置
+}
+
+// 历史战绩获取相关
+message HistoryGet{
+}
+message HistoryAck{
+    repeated Betsize Records = 11;
+}
+// 游戏开奖历史
+message RecordGet{
+}
+message RecordAck{
+    repeated Record Records = 11;
+}
